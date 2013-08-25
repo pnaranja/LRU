@@ -25,6 +25,9 @@ class LRU_Cache:
         self.max_length = 0
 
     def runcmd(self):
+        '''
+        Runs the commands based on user input
+        '''
         self.inpt = raw_input().split(' ')
         try:
             getattr(self,self.inpt[0].lower())()
