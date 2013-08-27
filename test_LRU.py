@@ -5,10 +5,12 @@ import unittest
 import LRU
 
 
+
 class Test_LRU(unittest.TestCase):
     '''
     TEST CLASS FOR LRU.PY
     '''
+
     def setUp(self):
         self.lru=LRU.LRU_Cache()
 
@@ -22,6 +24,7 @@ class Test_LRU(unittest.TestCase):
         INPUT:      Function and then any parameters to that function
         OUTPUT:     None
         '''
+        #Save stdout
         tmp = sys.stdout
 
         #Sends stdout to "null"
@@ -60,6 +63,14 @@ class Test_LRU(unittest.TestCase):
         self.lru.runcmd()
 
 
+    def test_badcommand(self):
+        '''
+        Test using a bad command
+        '''
+        LRU.raw_input = lambda : 'MUST ERROR'
+        self.stdoutnull(self.lru.runcmd)
+        self.assertRaises(AttributeError)
+
     def test_bound(self):
         '''
         Tests the Bound cmd.
@@ -89,7 +100,57 @@ class Test_LRU(unittest.TestCase):
         self.stdoutnull(self.get,'a')
         self.assertEqual(self.lru.cache['a'],('45',1))
 
+    def test_peek(self):
+        '''
+        Tests the peek cmd
+        Very similar to testing the set cmd
+        '''
+        self.bound(1)
+        self.set('a',5000)
+        LRU.raw_input = lambda : 'PEEK a'
+        self.stdoutnull(self.lru.runcmd)
+        self.assertEqual(self.lru.cache['a'][0],'5000')
+
+    def test_dump(self):
+        '''
+        Tests the dump cmd
+        Verify keys are in alphabetical order
+        '''
+        self.bound(5)
+        keys = ('e','d','a','b','c')
+        values = (5000,9999999999,0,-100,'fdsa')
+        for key,value in zip(keys,values):
+            self.set(key,value)
+
+        LRU.raw_input = lambda : 'DUMP'
+        self.stdoutnull(self.lru.runcmd)
+
+        self.assertEqual(self.lru.ordered_keys,['a','b','c','d','e'])
+
+    def test_removelru(self):
+        '''
+        Tests the remove lru function
+        Removes LRU by setting values above the bound
+        '''
+        self.bound(2)
+        self.set('a',3)
+        self.set('p',3)
+        self.set('o',3)
+        self.assertEqual(self.lru.cache.keys(),['p','o'])
+
+    def test_removelru2(self):
+        '''
+        Tests the remove lru function
+        Removes LRU by setting changing the bound
+        '''
+        self.bound(3)
+        self.set('a',3)
+        self.set('p',3)
+        self.set('o',3)
+        self.bound(2)
+        self.assertEqual(self.lru.cache.keys(),['p','o'])
 
 if __name__ == '__main__':
     unittest.main()
+
 

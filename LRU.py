@@ -76,8 +76,10 @@ class LRU_Cache:
         '''
         Displays the cache in alphabetical order based on the keys
         '''
-        for key,value in zip(self.cache.viewkeys(),self.cache.viewvalues()):
-            print key,value[0]
+        self.ordered_keys = self.cache.keys()
+        self.ordered_keys.sort()
+        for key in self.ordered_keys:
+            print key,self.cache[key][0]
 
     def removelru(self,num):
         '''
