@@ -60,17 +60,24 @@ class LRU_Cache:
         Prints the value based on the key provided
         Increments 'used' value for the key
         '''
-        key = self.inpt[1]
-        print key,self.cache[key][0]
-        value,used = self.cache[key]
-        self.cache[key] = value,used+1
+        try:
+            key = self.inpt[1]
+            value,used = self.cache[key]
+            print key,value
+            self.cache[key] = value,used+1
+        except KeyError:
+            print 'Null'
 
     def peek(self):
         '''
         Just prints the key and value given the key provided
         '''
-        key = self.inpt[1]
-        print key,self.cache[key][0]
+        try:
+            key = self.inpt[1]
+            value = self.cache[key][0]
+            print key,value
+        except KeyError:
+            print 'Null'
 
     def dump(self):
         '''
@@ -94,7 +101,7 @@ class LRU_Cache:
             del self.cache[ min( tempcache,key=tempcache.get )] #Determine minumum based on dict value and not dict key
 
 
-def main():
+def main(): #pragma: no cover
 
     lru = LRU_Cache()
     #First user input is the # of commands that will be run
@@ -110,5 +117,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main() #pragma: no cover
 

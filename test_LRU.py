@@ -2,6 +2,7 @@
 
 import sys,os
 import unittest
+import StringIO
 import LRU
 
 
@@ -37,6 +38,30 @@ class Test_LRU(unittest.TestCase):
         #Restablish stdout
         sys.stdout = tmp
 
+    def stdoutsave(self,func,*params):
+        '''
+        Redirects a function's stdout to null
+
+        INPUT:      Function and then any parameters to that function
+        OUTPUT:     Standard output of the function
+        '''
+        #Save stdout
+        tmp = sys.stdout
+
+        #Sends stdout to a StringIO
+        out = StringIO.StringIO()
+        sys.stdout = out
+
+        #If there are any parameters (len>0) then invoke function with those parameters
+        #Else just invoke the function
+        func(*params) if len(params) else func()
+
+        #Restablish stdout
+        sys.stdout = tmp
+
+        #Return the saved stdout, stripping any newlines
+        return out.getvalue().strip('\n')
+
 
     def bound(self,x):
         '''
@@ -60,6 +85,22 @@ class Test_LRU(unittest.TestCase):
         Created seperate function since most tests depend on a GET cmd
         '''
         LRU.raw_input = lambda : 'GET '+str(x)
+        self.lru.runcmd()
+
+    def peek(self,x):
+        '''
+        Runs the lru.bound command - PEEK x
+        Created seperate function since most tests depend on a PEEK cmd
+        '''
+        LRU.raw_input = lambda : 'PEEK '+str(x)
+        self.lru.runcmd()
+
+    def dump(self):
+        '''
+        Runs the lru.bound command - DUMP
+        Created seperate function since most tests depend on a DUMP cmd
+        '''
+        LRU.raw_input = lambda : 'DUMP'
         self.lru.runcmd()
 
 
@@ -100,6 +141,16 @@ class Test_LRU(unittest.TestCase):
         self.stdoutnull(self.get,'a')
         self.assertEqual(self.lru.cache['a'],('45',1))
 
+    def test_get_null(self):
+        '''
+        Tests get cmd where key does not exist
+        Expect stdout to be None
+        '''
+        self.bound(1)
+        self.set('a',45)
+        self.assertEqual(self.stdoutsave(self.get,'b'),'Null')
+
+
     def test_peek(self):
         '''
         Tests the peek cmd
@@ -107,9 +158,17 @@ class Test_LRU(unittest.TestCase):
         '''
         self.bound(1)
         self.set('a',5000)
-        LRU.raw_input = lambda : 'PEEK a'
-        self.stdoutnull(self.lru.runcmd)
+        self.stdoutnull(self.peek,'a')
         self.assertEqual(self.lru.cache['a'][0],'5000')
+
+    def test_peek_null(self):
+        '''
+        Tests peek cmd where key does not exist
+        Expect stdout to be None
+        '''
+        self.bound(1)
+        self.set('a',45)
+        self.assertEqual(self.stdoutsave(self.peek,'b'),'Null')
 
     def test_dump(self):
         '''
@@ -122,8 +181,7 @@ class Test_LRU(unittest.TestCase):
         for key,value in zip(keys,values):
             self.set(key,value)
 
-        LRU.raw_input = lambda : 'DUMP'
-        self.stdoutnull(self.lru.runcmd)
+        self.stdoutnull(self.dump)
 
         self.assertEqual(self.lru.ordered_keys,['a','b','c','d','e'])
 
