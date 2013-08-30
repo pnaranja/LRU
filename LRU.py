@@ -129,7 +129,7 @@ class LRU_Cache:
 
 
 
-def main():
+def main(): #pragma: no cover
 
     lru = LRU_Cache()
     numcmds = lru.numcmds()

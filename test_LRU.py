@@ -97,14 +97,11 @@ class Test_LRU(unittest.TestCase):
 
     def dump(self):
         '''
-        Runs the lru.bound command - PEEK x
-        Created seperate function since most tests depend on a PEEK cmd
+        Runs the lru.bound command - DUMP
+        Created seperate function since most tests depend on a DUMP cmd
         '''
         LRU.raw_input = lambda : 'DUMP'
         self.lru.runcmd()
-
-
-
 
 
     def test_moremillioncmds(self):
