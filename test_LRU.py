@@ -2,6 +2,7 @@
 
 import sys,os
 import unittest
+import StringIO
 import LRU
 
 
@@ -37,6 +38,30 @@ class Test_LRU(unittest.TestCase):
         #Restablish stdout
         sys.stdout = tmp
 
+    def stdoutsave(self,func,*params):
+        '''
+        Redirects a function's stdout to null
+
+        INPUT:      Function and then any parameters to that function
+        OUTPUT:     Standard output of the function
+        '''
+        #Save stdout
+        tmp = sys.stdout
+
+        #Sends stdout to a StringIO
+        out = StringIO.StringIO()
+        sys.stdout = out
+
+        #If there are any parameters (len>0) then invoke function with those parameters
+        #Else just invoke the function
+        func(*params) if len(params) else func()
+
+        #Restablish stdout
+        sys.stdout = tmp
+
+        #Return the saved stdout, stripping any newlines
+        return out.getvalue().strip('\n')
+
 
     def bound(self,x):
         '''
@@ -62,6 +87,51 @@ class Test_LRU(unittest.TestCase):
         LRU.raw_input = lambda : 'GET '+str(x)
         self.lru.runcmd()
 
+    def peek(self,x):
+        '''
+        Runs the lru.bound command - PEEK x
+        Created seperate function since most tests depend on a PEEK cmd
+        '''
+        LRU.raw_input = lambda : 'PEEK '+str(x)
+        self.lru.runcmd()
+
+    def dump(self):
+        '''
+        Runs the lru.bound command - PEEK x
+        Created seperate function since most tests depend on a PEEK cmd
+        '''
+        LRU.raw_input = lambda : 'DUMP'
+        self.lru.runcmd()
+
+
+
+
+
+    def test_moremillioncmds(self):
+        '''
+        Tests constriant that you can only process up to 1million cmds
+        '''
+        LRU.raw_input = lambda x : '1000001'
+        self.lru.raw_input2 = lambda x : '10000' #this is the second input
+        out = self.lru.numcmds()
+        self.assertEquals(out,'10000')
+
+    def test_millioncmds(self):
+        '''
+        Run 1 million cmds
+        At the end of the run, only keys c and d should be in the cache
+        '''
+        LRU.raw_input = lambda x : '1000000'
+        numcmds = self.lru.numcmds()
+
+        for x in xrange(int(numcmds)/5):
+           self.bound(2)
+           self.set('a',4)
+           self.set('b',1)
+           self.set('c',999999)
+           self.set('d',455435)
+
+        self.assertEquals(self.lru.cache,{'c':(999999,0),'d':(455435,0)})
 
     def test_badcommand(self):
         '''
@@ -90,6 +160,15 @@ class Test_LRU(unittest.TestCase):
         self.set('a',2)
         self.assertEqual(self.lru.cache['a'],('2',0))
 
+    def test_set2(self):
+        '''
+        Tests the Set cmd using a value length >10.
+        Value should be disregarded
+        '''
+        self.bound(1)
+        self.stdoutnull(self.set,'a',12345678901)   #Disregard the error to stdout
+        self.assertEqual(self.stdoutsave(self.get,'a'),'Null')
+
     def test_get(self):
         '''
         Tests the Get cmd.
@@ -100,6 +179,16 @@ class Test_LRU(unittest.TestCase):
         self.stdoutnull(self.get,'a')
         self.assertEqual(self.lru.cache['a'],('45',1))
 
+    def test_get_null(self):
+        '''
+        Tests get cmd where key does not exist
+        Expect stdout to be None
+        '''
+        self.bound(1)
+        self.set('a',45)
+        self.assertEqual(self.stdoutsave(self.get,'b'),'Null')
+
+
     def test_peek(self):
         '''
         Tests the peek cmd
@@ -107,9 +196,17 @@ class Test_LRU(unittest.TestCase):
         '''
         self.bound(1)
         self.set('a',5000)
-        LRU.raw_input = lambda : 'PEEK a'
-        self.stdoutnull(self.lru.runcmd)
+        self.stdoutnull(self.peek,'a')
         self.assertEqual(self.lru.cache['a'][0],'5000')
+
+    def test_peek_null(self):
+        '''
+        Tests peek cmd where key does not exist
+        Expect stdout to be None
+        '''
+        self.bound(1)
+        self.set('a',45)
+        self.assertEqual(self.stdoutsave(self.peek,'b'),'Null')
 
     def test_dump(self):
         '''
@@ -122,8 +219,7 @@ class Test_LRU(unittest.TestCase):
         for key,value in zip(keys,values):
             self.set(key,value)
 
-        LRU.raw_input = lambda : 'DUMP'
-        self.stdoutnull(self.lru.runcmd)
+        self.stdoutnull(self.dump)
 
         self.assertEqual(self.lru.ordered_keys,['a','b','c','d','e'])
 
