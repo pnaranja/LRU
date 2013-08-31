@@ -23,6 +23,7 @@ class LRU_Cache:
         '''
         self.cache = {}
         self.max_length = 0
+        self.numkeys = 0
 
     def numcmds(self):
         '''
@@ -66,18 +67,33 @@ class LRU_Cache:
     def set(self):
         '''
         Enters the key and value in the cache
-        First check if length of value is not greater than 10
-        Second check if max length already reached.
-        If so, remove 1 item based on LRU
+        1. Check if length of the key or value is not greater than 10
+        2. Check if this is setting a new key.  If so, if
+        max length already reached, remove 1 item based on LRU
+        If setting an old key, set new value no change with # times
+        used and nth key in cache
+
+        key:(value, # of times key is used, nth key in the cache)
         '''
-        #if the input value is > 10, disregard
-        if len(str(self.inpt[2])) > 10:
+        #store key and value from input
+        key,value = str(self.inpt[1]),str(self.inpt[2])
+
+        #if the input key or value is > 10 characters, disregard
+        if len(key) > 10 or len(value) > 10:
             print 'Value cannot be greater than 10 characters'
             return
-        key,value = self.inpt[1],self.inpt[2]
-        if len(self.cache) >= self.max_length:
-            self.removelru(1)
-        self.cache[key] = (value,0)
+
+        #Check if key already exists in the cache
+        if key in self.cache.viewkeys():
+            old_value, num_times, nthkey = self.cache[key]
+            self.cache[key] = (value, num_times, nthkey)
+
+        else:
+            #Check if cache is already at max size
+            if len(self.cache) >= self.max_length:
+                self.removelru(1)
+            self.numkeys += 1
+            self.cache[key] = (value,0,self.numkeys)
 
     def get(self):
         '''
@@ -86,9 +102,9 @@ class LRU_Cache:
         '''
         try:
             key = self.inpt[1]
-            value,used = self.cache[key]
+            value,used,nthkey = self.cache[key]
             print key,value
-            self.cache[key] = value,used+1
+            self.cache[key] = value,used+1,nthkey
         except KeyError:
             print 'Null'
 
@@ -116,16 +132,17 @@ class LRU_Cache:
         '''
         Remove (num) number of entries from cache based on LRU
         '''
-        #Build a new dict based on cache key and # of times used
-        tempcache = { v[1]:k for v,k in zip(self.cache.viewvalues(),self.cache.viewkeys()) }
+        for x in xrange(num):
+            #Find the value of the lowest # of times used in the cache
+            lowest_times = min([v[1] for v in self.cache.viewvalues() ])
 
-        #TODO - If all # of times is the same, then the last key alphabetically will be deleted
-        #       In this situation, need to delete the last entered key
-        #Find the key that corresponds to the minimum # of times used, and delete that value
-        #Repeat num times
-        for x in xrange(int(num)):
-            #TODO - Wrong implementation.  Redo
-            del self.cache[tempcache[0]] #Determine minumum based on dict value and not dict key
+            #Find the key(s) that has/have the lowest # of times used
+            #Create a dict of {nthkey : key}.  Each nthkey value should be unique
+            lowest_keys ={ v[2]:k for v,k in zip(self.cache.viewvalues(),self.cache.viewkeys()) if v[1] == lowest_times }
+
+            #Within that list, delete the key that has been in the cache the longest
+            #Cache the longest = smallest nthkey value
+            del self.cache[min(lowest_keys.viewvalues())]
 
 
 

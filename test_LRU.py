@@ -128,7 +128,7 @@ class Test_LRU(unittest.TestCase):
            self.set('c',999999)
            self.set('d',455435)
 
-        self.assertEquals(self.lru.cache,{'c':(999999,0),'d':(455435,0)})
+        self.assertEquals(self.lru.cache.keys(),['c','d'])
 
     def test_badcommand(self):
         '''
@@ -155,7 +155,7 @@ class Test_LRU(unittest.TestCase):
         '''
         self.bound(1)
         self.set('a',2)
-        self.assertEqual(self.lru.cache['a'],('2',0))
+        self.assertEqual(self.lru.cache['a'],('2',0,1))
 
     def test_set2(self):
         '''
@@ -174,7 +174,7 @@ class Test_LRU(unittest.TestCase):
         self.bound(1)
         self.set('a',45)
         self.stdoutnull(self.get,'a')
-        self.assertEqual(self.lru.cache['a'],('45',1))
+        self.assertEqual(self.lru.cache['a'],('45',1,1))
 
     def test_get_null(self):
         '''
