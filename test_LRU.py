@@ -103,10 +103,12 @@ class Test_LRU(unittest.TestCase):
         LRU.raw_input = lambda : 'DUMP'
         self.lru.runcmd()
 
+#Test Functions
+################################################################################
 
     def test_moremillioncmds(self):
         '''
-        Tests constriant that you can only process up to 1million cmds
+        Tests constriant that you can only process up to 1 million cmds
         '''
         LRU.raw_input = lambda x : '1000001'
         self.lru.raw_input2 = lambda x : '10000' #this is the second input
@@ -120,15 +122,29 @@ class Test_LRU(unittest.TestCase):
         '''
         LRU.raw_input = lambda x : '1000000'
         numcmds = self.lru.numcmds()
+        self.bound(2)
 
-        for x in xrange(int(numcmds)/5):
-           self.bound(2)
+        for x in xrange(int(numcmds)/10):
            self.set('a',4)
            self.set('b',1)
+           self.stdoutnull(self.get,'b')
+           self.stdoutnull(self.peek,'a')
+           self.stdoutnull(self.dump)
+           self.set('e',154389)
            self.set('c',999999)
            self.set('d',455435)
+           self.stdoutnull(self.get,'c')
+           self.stdoutnull(self.get,'d')
 
         self.assertEquals(self.lru.cache.keys(),['c','d'])
+
+    def test_badnumcommands(self):
+        '''
+        Test using letters for # of cmds
+        '''
+        LRU.raw_input = lambda x : 'fsja'
+        with self.assertRaises(SystemExit):
+            self.stdoutnull(self.lru.numcmds)
 
     def test_badcommand(self):
         '''
@@ -164,7 +180,15 @@ class Test_LRU(unittest.TestCase):
         '''
         self.bound(1)
         self.stdoutnull(self.set,'a',12345678901)   #Disregard the error to stdout
-        self.assertEqual(self.stdoutsave(self.get,'a'),'Null')
+        self.assertEqual(self.stdoutsave(self.get,'a'),'NULL')
+
+    def test_set3(self):
+        '''
+        Tests the Set cmd using a value as characters instead of numbers
+        '''
+        self.bound(1)
+        self.stdoutnull(self.set,'a','Fdfds')   #Disregard the error to stdout
+        self.assertEqual(self.stdoutsave(self.get,'a'),'Fdfds')
 
     def test_get(self):
         '''
@@ -173,7 +197,7 @@ class Test_LRU(unittest.TestCase):
         '''
         self.bound(1)
         self.set('a',45)
-        self.stdoutnull(self.get,'a')
+        self.assertEqual(self.stdoutsave(self.get,'a'),'45')
         self.assertEqual(self.lru.cache['a'],('45',1,1))
 
     def test_get_null(self):
@@ -183,7 +207,7 @@ class Test_LRU(unittest.TestCase):
         '''
         self.bound(1)
         self.set('a',45)
-        self.assertEqual(self.stdoutsave(self.get,'b'),'Null')
+        self.assertEqual(self.stdoutsave(self.get,'b'),'NULL')
 
 
     def test_peek(self):
@@ -193,7 +217,7 @@ class Test_LRU(unittest.TestCase):
         '''
         self.bound(1)
         self.set('a',5000)
-        self.stdoutnull(self.peek,'a')
+        self.assertEqual(self.stdoutsave(self.peek,'a'),'5000')
         self.assertEqual(self.lru.cache['a'][0],'5000')
 
     def test_peek_null(self):
@@ -203,7 +227,7 @@ class Test_LRU(unittest.TestCase):
         '''
         self.bound(1)
         self.set('a',45)
-        self.assertEqual(self.stdoutsave(self.peek,'b'),'Null')
+        self.assertEqual(self.stdoutsave(self.peek,'b'),'NULL')
 
     def test_dump(self):
         '''

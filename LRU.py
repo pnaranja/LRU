@@ -33,8 +33,10 @@ class LRU_Cache:
         '''
 
         try:
-            numcmds = raw_input('Please enter # of commands to run: ')
+            numcmds = raw_input()
             while int(numcmds) > 1000000:
+                #raw_input2 is a special case for unit testing.
+                #If not unit testing, it will go to the exception and re-use raw_input
                 try: numcmds = self.raw_input2('\nWill not process more than 1 million commands.\nPlease enter # of commands to run: ')
                 except AttributeError: numcmds = raw_input('\nWill not process more than 1 million commands.\nPlease enter # of commands to run: ')
 
@@ -103,21 +105,21 @@ class LRU_Cache:
         try:
             key = self.inpt[1]
             value,used,nthkey = self.cache[key]
-            print key,value
+            print value
             self.cache[key] = value,used+1,nthkey
         except KeyError:
-            print 'Null'
+            print 'NULL'
 
     def peek(self):
         '''
-        Just prints the key and value given the key provided
+        Just prints the value given the key provided
         '''
         try:
             key = self.inpt[1]
             value = self.cache[key][0]
-            print key,value
+            print value
         except KeyError:
-            print 'Null'
+            print 'NULL'
 
     def dump(self):
         '''
